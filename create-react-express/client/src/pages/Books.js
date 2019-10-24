@@ -1,60 +1,112 @@
 import React, { Component } from "react";
 import Jumbotron from "../components/Jumbotron";
-import API from "../utils/API";
-import DeleteBtn from "../components/DeleteBtn";
-import { Col, Row, Container } from "../components/Grid";
-import { List, ListItem } from "../components/List";
-import { Input, TextArea, FormBtn } from "../components/Form";
+import Container from "../components/Container";
+import Row from "../components/Row";
+import Col from "../components/Col";
+import Card from "../components/Card";
+import SearchForm from "../components/SearchForm";
+import BookDetail from "../components/BookDetail";
+import API from "../util/API";
 
 class Books extends Component {
   state = {
-    books: []
+    books: [],
+    search: ""
   };
 
-  componentDidMount() {
-    this.loadBooks();
-  }
+  // searches the GoogleBooks API storing the data in books array
+  searchBooks = query => {
+    API.searchBooks(query)
+      .then(res =>
+        this.setState(
+          {
+            books: res.data.items,
+            search: ""
+          },
+          console.log(res.data.items)
+        )
+      )
+      .catch(err => console.log(err));
+  };
 
-  loadBooks = () => {
-    API.getBooks()
-      .then(res => this.setState({ books: res.data }))
+  handleInputChange = event => {
+    const value = event.target.value;
+    const name = event.target.name;
+    this.setState({
+      [name]: value
+    });
+  };
+
+  // once the search term is submitted, search the GoogleBooks API for the value of `this.state.search`
+  handleFormSubmit = event => {
+    event.preventDefault();
+    this.searchBooks(this.state.search);
+  };
+
+  // deletes book from database
+  deleteBook = id => {
+    API.deleteBook(id)
+      .then(res => console.log(res.status))
+      .catch(err => console.log(err));
+  };
+
+  // saves book to database
+  handleSaveBook = bookData => {
+    API.saveBook(bookData)
+      .then(res => alert("Book Saved!"))
       .catch(err => console.log(err));
   };
 
   render() {
     return (
-      <Container fluid>
+      <Container>
         <Row>
-          <Col size="md-6">
-            <Jumbotron>
-              <h1>What Books Should I Read?</h1>
-            </Jumbotron>
-            <form>
-              <Input name="title" placeholder="Title (required)" />
-              <Input name="author" placeholder="Author (required)" />
-              <TextArea name="synopsis" placeholder="Synopsis (Optional)" />
-              <FormBtn>Submit Book</FormBtn>
-            </form>
+          <Col size="md-12">
+            <Jumbotron />
           </Col>
-          <Col size="md-6 sm-12">
-            <Jumbotron>
-              <h1>Books On My List</h1>
-            </Jumbotron>
+        </Row>
+        <Row>
+          <Col size="md-12">
+            <Card heading="Books Search">
+              <SearchForm
+                value={this.state.search}
+                handleInputChange={this.handleInputChange}
+                handleFormSubmit={this.handleFormSubmit}
+              />
+            </Card>
+          </Col>
+        </Row>
+        <Row>
+          <Col size="md-12">
             {this.state.books.length ? (
-              <List>
+              <Card heading="Results">
                 {this.state.books.map(book => (
-                  <ListItem key={book._id}>
-                    <a href={"/books/" + book._id}>
-                      <strong>
-                        {book.title} by {book.author}
-                      </strong>
-                    </a>
-                    <DeleteBtn />
-                  </ListItem>
+                  <BookDetail
+                    key={book.id}
+                    src={book.volumeInfo.imageLinks 
+                      ? book.volumeInfo.imageLinks.thumbnail
+                      : "http://icons.iconarchive.com/icons/paomedia/small-n-flat/128/book-icon.png"}
+                    title={book.volumeInfo.title}
+                    authors={book.volumeInfo.authors
+                      ? book.volumeInfo.authors.join(", ")
+                      : "N/A"}
+                    date={book.volumeInfo.publishedDate}
+                    description={book.volumeInfo.description}
+                    link={book.volumeInfo.infoLink}
+                    handleSaveBook={() => this.handleSaveBook({ 
+                      title: book.volumeInfo.title,
+                      src: book.volumeInfo.imageLinks 
+                        ? book.volumeInfo.imageLinks.thumbnail 
+                        : "http://icons.iconarchive.com/icons/paomedia/small-n-flat/128/book-icon.png",
+                      authors: book.volumeInfo.authors,
+                      date: book.volumeInfo.publishedDate,
+                      description: book.volumeInfo.description,
+                      link: book.volumeInfo.infoLink})}
+                  />
                 ))}
-              </List>
+              </Card>
             ) : (
-              <h3>No Results to Display</h3>
+              <Card heading="Search Results"></Card>
             )}
           </Col>
         </Row>

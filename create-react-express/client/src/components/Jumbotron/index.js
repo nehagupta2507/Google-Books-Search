@@ -1,12 +1,12 @@
 import React from "react";
 
-function Jumbotron({ children }) {
+const Jumbotron = ({ children }) => {
   return (
     <div
-      style={{ height: 300, clear: "both", paddingTop: 120, textAlign: "center" }}
+      style={{ textAlign: "center", backgroundColor: "rgb(178,180,53)" }}
       className="jumbotron"
     >
-      {children}
+      <img src="./bookLogo.jpeg" alt="google-logo" style={{ height: "150px" }} />
     </div>
   );
 }
